@@ -135,12 +135,21 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 		}
 		try {
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
+
+			// 指定序列化id，如果需要的话，可以根据序列化id反序列化出BeanFactory对象
 			beanFactory.setSerializationId(getId());
+
 			customizeBeanFactory(beanFactory);
+
+			// 初始化DocumentReader，进行配置文件的读取和解析
 			loadBeanDefinitions(beanFactory);
+
 			synchronized (this.beanFactoryMonitor) {
+
+				// 使用全局变量beanFactory记录BeanFactory实例
 				this.beanFactory = beanFactory;
 			}
+
 		} catch (IOException ex) {
 			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
 		}

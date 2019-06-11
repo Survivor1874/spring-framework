@@ -22,6 +22,8 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 
 /**
+ *
+ * xml 解析
  * Strategy interface for loading an XML {@link Document}.
  *
  * @author Rob Harrop
