@@ -597,10 +597,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				// 初始化所有非懒加载的单例bean 包括 dubbo bean（ServiceBean，ProtocolConfig and etc）
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
-				// 完成刷新 publish 事件， dubbo 就是在这里响应事件开始 export 的
+				// 完成刷新, publish 事件， dubbo 就是在这里响应事件开始 export 的
 				finishRefresh();
 			} catch (BeansException ex) {
 				if (logger.isWarnEnabled()) {
@@ -910,10 +911,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
-		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
-				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
-			beanFactory.setConversionService(
-					beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
+		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) && beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
+			beanFactory.setConversionService(beanFactory.getBean(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class));
 		}
 
 		// Register a default embedded value resolver if no bean post-processor
@@ -936,6 +935,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		// 初始化所有非懒加载的单例bean 包括 dubbo bean（ServiceBean，ProtocolConfig and etc）
+		// 并将 dubbo listener 添加，等待 refresh 完成事件触发导出 dubbo bean
 		beanFactory.preInstantiateSingletons();
 	}
 
@@ -955,6 +956,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		getLifecycleProcessor().onRefresh();
 
 		// Publish the final event.
+		// 发布上下文刷新事件
 		publishEvent(new ContextRefreshedEvent(this));
 
 		// Participate in LiveBeansView MBean, if active.
