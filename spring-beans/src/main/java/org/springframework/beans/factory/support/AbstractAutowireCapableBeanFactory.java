@@ -1366,14 +1366,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * from the bean definition.
 	 *
 	 * @param beanName the name of the bean
-	 * @param mbd      the bean definition for the bean
-	 * @param bw       the BeanWrapper with bean instance
+	 * @param rootBeanDefinition      the bean definition for the bean
+	 * @param beanWrapper       the BeanWrapper with bean instance
 	 */
 	@SuppressWarnings("deprecation")  // for postProcessPropertyValues
-	protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable BeanWrapper bw) {
-		if (bw == null) {
-			if (mbd.hasPropertyValues()) {
-				throw new BeanCreationException(mbd.getResourceDescription(), beanName, "Cannot apply property values to null instance");
+	protected void populateBean(String beanName, RootBeanDefinition rootBeanDefinition, @Nullable BeanWrapper beanWrapper) {
+		if (beanWrapper == null) {
+			if (rootBeanDefinition.hasPropertyValues()) {
+				throw new BeanCreationException(rootBeanDefinition.getResourceDescription(), beanName, "Cannot apply property values to null instance");
 			} else {
 				// Skip property population phase for null instance.
 				return;
@@ -1385,11 +1385,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// to support styles of field injection.
 		boolean continueWithPropertyPopulation = true;
 
-		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
+		//  不是 synthetic 类型的 bean && 有注册过 InstantiationAwareBeanPostProcessor 类型的bean
+		if (!rootBeanDefinition.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
+					// 找到 InstantiationAwareBeanPostProcessor 类型的处理 bean
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
-					if (!ibp.postProcessAfterInstantiation(bw.getWrappedInstance(), beanName)) {
+
+					// ！postProcessor 操作在实例化之后操作 ==> postProcessor 需要在实例化之前完成
+					if (!ibp.postProcessAfterInstantiation(beanWrapper.getWrappedInstance(), beanName)) {
+						// 如果 postProcessor 需要在实例化之前完成，将 continueWithPropertyPopulation 置为 false
 						continueWithPropertyPopulation = false;
 						break;
 					}
@@ -1401,55 +1406,56 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return;
 		}
 
-		PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
+		PropertyValues propertyValues = (rootBeanDefinition.hasPropertyValues() ? rootBeanDefinition.getPropertyValues() : null);
 
-		if (mbd.getResolvedAutowireMode() == AUTOWIRE_BY_NAME || mbd.getResolvedAutowireMode() == AUTOWIRE_BY_TYPE) {
-			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
+		if (rootBeanDefinition.getResolvedAutowireMode() == AUTOWIRE_BY_NAME || rootBeanDefinition.getResolvedAutowireMode() == AUTOWIRE_BY_TYPE) {
+			MutablePropertyValues newPvs = new MutablePropertyValues(propertyValues);
 			// Add property values based on autowire by name if applicable.
-			if (mbd.getResolvedAutowireMode() == AUTOWIRE_BY_NAME) {
-				autowireByName(beanName, mbd, bw, newPvs);
+			if (rootBeanDefinition.getResolvedAutowireMode() == AUTOWIRE_BY_NAME) {
+				autowireByName(beanName, rootBeanDefinition, beanWrapper, newPvs);
 			}
 			// Add property values based on autowire by type if applicable.
-			if (mbd.getResolvedAutowireMode() == AUTOWIRE_BY_TYPE) {
-				autowireByType(beanName, mbd, bw, newPvs);
+			if (rootBeanDefinition.getResolvedAutowireMode() == AUTOWIRE_BY_TYPE) {
+				autowireByType(beanName, rootBeanDefinition, beanWrapper, newPvs);
 			}
-			pvs = newPvs;
+			propertyValues = newPvs;
 		}
 
+		// 是否有注册过 InstantiationAwareBeanPostProcessor 类型的bean
 		boolean hasInstAwareBpps = hasInstantiationAwareBeanPostProcessors();
-		boolean needsDepCheck = (mbd.getDependencyCheck() != AbstractBeanDefinition.DEPENDENCY_CHECK_NONE);
+		boolean needsDepCheck = (rootBeanDefinition.getDependencyCheck() != AbstractBeanDefinition.DEPENDENCY_CHECK_NONE);
 
 		PropertyDescriptor[] filteredPds = null;
 		if (hasInstAwareBpps) {
-			if (pvs == null) {
-				pvs = mbd.getPropertyValues();
+			if (propertyValues == null) {
+				propertyValues = rootBeanDefinition.getPropertyValues();
 			}
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
-					PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
+					PropertyValues pvsToUse = ibp.postProcessProperties(propertyValues, beanWrapper.getWrappedInstance(), beanName);
 					if (pvsToUse == null) {
 						if (filteredPds == null) {
-							filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
+							filteredPds = filterPropertyDescriptorsForDependencyCheck(beanWrapper, rootBeanDefinition.allowCaching);
 						}
-						pvsToUse = ibp.postProcessPropertyValues(pvs, filteredPds, bw.getWrappedInstance(), beanName);
+						pvsToUse = ibp.postProcessPropertyValues(propertyValues, filteredPds, beanWrapper.getWrappedInstance(), beanName);
 						if (pvsToUse == null) {
 							return;
 						}
 					}
-					pvs = pvsToUse;
+					propertyValues = pvsToUse;
 				}
 			}
 		}
 		if (needsDepCheck) {
 			if (filteredPds == null) {
-				filteredPds = filterPropertyDescriptorsForDependencyCheck(bw, mbd.allowCaching);
+				filteredPds = filterPropertyDescriptorsForDependencyCheck(beanWrapper, rootBeanDefinition.allowCaching);
 			}
-			checkDependencies(beanName, mbd, filteredPds, pvs);
+			checkDependencies(beanName, rootBeanDefinition, filteredPds, propertyValues);
 		}
 
-		if (pvs != null) {
-			applyPropertyValues(beanName, mbd, bw, pvs);
+		if (propertyValues != null) {
+			applyPropertyValues(beanName, rootBeanDefinition, beanWrapper, propertyValues);
 		}
 	}
 

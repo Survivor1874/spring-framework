@@ -201,6 +201,14 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean enforceDestroyMethod = true;
 
+	/**
+	 * 这里的synthetic实际上是为了给用户自定义一些BeanDefinition注册到容器中以当作工具类来使用。
+	 * 对于synthetic类型的BeanDefinition，
+	 * getObjectFromFactoryBean 中是不会对FactoryBean生成的bean用post-processor进行后置处理的。
+	 * 后置处理的实现是在AbstractAutowireCapableBeanFactory.postProcessObjectFromFactoryBean中，
+	 * 它会调用容器中的BeanPostProcessor.postProcessAfterInitialization,
+	 * 这里提供了一个扩展点对FactoryBean生成的bean进行封装，代理等。
+	 */
 	private boolean synthetic = false;
 
 	private int role = BeanDefinition.ROLE_APPLICATION;
