@@ -60,8 +60,7 @@ import org.springframework.util.ReflectionUtils;
  * @see #setSingleton
  * @see #createInstance()
  */
-public abstract class AbstractFactoryBean<T>
-		implements FactoryBean<T>, BeanClassLoaderAware, BeanFactoryAware, InitializingBean, DisposableBean {
+public abstract class AbstractFactoryBean<T> implements FactoryBean<T>, BeanClassLoaderAware, BeanFactoryAware, InitializingBean, DisposableBean {
 
 	/** Logger available to subclasses. */
 	protected final Log logger = LogFactory.getLog(getClass());

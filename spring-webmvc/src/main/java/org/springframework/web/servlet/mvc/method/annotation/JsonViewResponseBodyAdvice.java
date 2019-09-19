@@ -60,8 +60,7 @@ public class JsonViewResponseBodyAdvice extends AbstractMappingJacksonResponseBo
 
 		Class<?>[] classes = ann.value();
 		if (classes.length != 1) {
-			throw new IllegalArgumentException(
-					"@JsonView only supported for response body advice with exactly 1 class argument: " + returnType);
+			throw new IllegalArgumentException("@JsonView only supported for response body advice with exactly 1 class argument: " + returnType);
 		}
 
 		bodyContainer.setSerializationView(classes[0]);

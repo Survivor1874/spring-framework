@@ -77,6 +77,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
 /**
+ * spring在初始化bean后，通过“postProcessAfterInitialization”拦截到所有的用到“@Scheduled”注解的方法，
+ * 并解析相应的的注解参数，放入“定时任务列表”等待后续处理；
+ * 之后再“定时任务列表”中统一执行相应的定时任务（任务为顺序执行，先执行cron，之后再执行fixedRate）。
+ * <p>
  * Bean post-processor that registers methods annotated with @{@link Scheduled}
  * to be invoked by a {@link org.springframework.scheduling.TaskScheduler} according
  * to the "fixedRate", "fixedDelay", or "cron" expression provided via the annotation.
@@ -330,8 +334,7 @@ public class ScheduledAnnotationBeanPostProcessor
 
 	@Override
 	public Object postProcessAfterInitialization(Object bean, String beanName) {
-		if (bean instanceof AopInfrastructureBean || bean instanceof TaskScheduler ||
-				bean instanceof ScheduledExecutorService) {
+		if (bean instanceof AopInfrastructureBean || bean instanceof TaskScheduler || bean instanceof ScheduledExecutorService) {
 			// Ignore AOP infrastructure such as scoped proxies.
 			return bean;
 		}
@@ -344,15 +347,21 @@ public class ScheduledAnnotationBeanPostProcessor
 						Set<Scheduled> scheduledMethods = AnnotatedElementUtils.getMergedRepeatableAnnotations(method, Scheduled.class, Schedules.class);
 						return (!scheduledMethods.isEmpty() ? scheduledMethods : null);
 					});
+
+
 			if (annotatedMethods.isEmpty()) {
 				this.nonAnnotatedClasses.add(targetClass);
 				if (logger.isTraceEnabled()) {
 					logger.trace("No @Scheduled annotations found on bean class: " + targetClass);
 				}
 			} else {
+
+
 				// Non-empty set of methods
-				annotatedMethods.forEach((method, scheduledMethods) ->
-						scheduledMethods.forEach(scheduled -> processScheduled(scheduled, method, bean)));
+				// 执行关键方法
+				annotatedMethods.forEach((method, scheduledMethods) -> scheduledMethods.forEach(scheduled -> processScheduled(scheduled, method, bean)));
+
+
 				if (logger.isTraceEnabled()) {
 					logger.trace(annotatedMethods.size() + " @Scheduled methods processed on bean '" + beanName +
 							"': " + annotatedMethods);
@@ -379,6 +388,7 @@ public class ScheduledAnnotationBeanPostProcessor
 			Set<ScheduledTask> tasks = new LinkedHashSet<>(4);
 
 			// Determine initial delay
+			// 获取 initialDelay 值
 			long initialDelay = scheduled.initialDelay();
 			String initialDelayString = scheduled.initialDelayString();
 			if (StringUtils.hasText(initialDelayString)) {
@@ -390,8 +400,7 @@ public class ScheduledAnnotationBeanPostProcessor
 					try {
 						initialDelay = parseDelayAsLong(initialDelayString);
 					} catch (RuntimeException ex) {
-						throw new IllegalArgumentException(
-								"Invalid initialDelayString value \"" + initialDelayString + "\" - cannot parse into long");
+						throw new IllegalArgumentException("Invalid initialDelayString value \"" + initialDelayString + "\" - cannot parse into long");
 					}
 				}
 			}
@@ -399,6 +408,8 @@ public class ScheduledAnnotationBeanPostProcessor
 			// Check cron expression
 			String cron = scheduled.cron();
 			if (StringUtils.hasText(cron)) {
+
+				// zone 默认为 ""
 				String zone = scheduled.zone();
 				if (this.embeddedValueResolver != null) {
 					cron = this.embeddedValueResolver.resolveStringValue(cron);
@@ -412,8 +423,13 @@ public class ScheduledAnnotationBeanPostProcessor
 						if (StringUtils.hasText(zone)) {
 							timeZone = StringUtils.parseTimeZoneString(zone);
 						} else {
+
+							// 默认时区
 							timeZone = TimeZone.getDefault();
 						}
+
+						// 放入cron任务列表中（不执行）
+						// 如果是新任务 加入到 tasks set 中
 						tasks.add(this.registrar.scheduleCronTask(new CronTask(runnable, new CronTrigger(cron, timeZone))));
 					}
 				}
@@ -478,7 +494,10 @@ public class ScheduledAnnotationBeanPostProcessor
 			Assert.isTrue(processedSchedule, errorMessage);
 
 			// Finally register the scheduled tasks
+			// 加锁
 			synchronized (this.scheduledTasks) {
+
+				// Scheduld 方法所在对象为key， set<scheduled 方法> 为value 加入到 this.scheduledTasks 中
 				Set<ScheduledTask> regTasks = this.scheduledTasks.computeIfAbsent(bean, key -> new LinkedHashSet<>(4));
 				regTasks.addAll(tasks);
 			}

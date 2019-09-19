@@ -65,8 +65,7 @@ public interface ImportBeanDefinitionRegistrar {
 	 * strategy for imported beans
 	 * @since 5.2
 	 */
-	default void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry,
-			BeanNameGenerator importBeanNameGenerator) {
+	default void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
 
 		registerBeanDefinitions(importingClassMetadata, registry);
 	}

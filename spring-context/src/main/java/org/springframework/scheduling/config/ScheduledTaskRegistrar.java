@@ -352,7 +352,6 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 	 * Schedule all registered tasks against the underlying
 	 * {@linkplain #setTaskScheduler(TaskScheduler) task scheduler}.
 	 */
-	@SuppressWarnings("deprecation")
 	protected void scheduleTasks() {
 		if (this.taskScheduler == null) {
 			this.localExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -415,6 +414,7 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 	 * Schedule the specified cron task, either right away if possible
 	 * or on initialization of the scheduler.
 	 *
+	 * @param task Scheduled 注解方法的包装
 	 * @return a handle to the scheduled task, allowing to cancel it
 	 * (or {@code null} if processing a previously registered task)
 	 * @since 4.3
@@ -430,7 +430,11 @@ public class ScheduledTaskRegistrar implements ScheduledTaskHolder, Initializing
 		if (this.taskScheduler != null) {
 			scheduledTask.future = this.taskScheduler.schedule(task.getRunnable(), task.getTrigger());
 		} else {
+
+			// 添加到 this.cronTasks
 			addCronTask(task);
+
+			// 添加到 this.unresolvedTasks
 			this.unresolvedTasks.put(task, scheduledTask);
 		}
 		return (newTask ? scheduledTask : null);

@@ -306,6 +306,8 @@ public class BeanDefinitionParserDelegate {
 	 * @see #getDefaults()
 	 */
 	public void initDefaults(Element root, @Nullable BeanDefinitionParserDelegate parent) {
+		// this.defaults 是一个 DocumentDefaultsDefinition 对象；
+		// 将 xml 文件中的一些命名空间的基本配置转换成 DocumentDefaultsDefinition 对象；
 		populateDefaults(this.defaults, (parent != null ? parent.defaults : null), root);
 		this.readerContext.fireDefaultsRegistered(this.defaults);
 	}
@@ -321,9 +323,13 @@ public class BeanDefinitionParserDelegate {
 	 * @param root           the root element of the current bean definition document (or nested beans element)
 	 */
 	protected void populateDefaults(DocumentDefaultsDefinition defaults, @Nullable DocumentDefaultsDefinition parentDefaults, Element root) {
+
+		//查看xml文件中默认的default-lazy-init 值；
+		// (如果xml没有显示配置 则它的值为 default)懒加载的默认值
 		String lazyInit = root.getAttribute(DEFAULT_LAZY_INIT_ATTRIBUTE);
 		if (isDefaultValue(lazyInit)) {
 			// Potentially inherited from outer <beans> sections, otherwise falling back to false.
+			// 如果有父类， 以父类为准， 否则将 lazy-init 值设为 false
 			lazyInit = (parentDefaults != null ? parentDefaults.getLazyInit() : FALSE_VALUE);
 		}
 		defaults.setLazyInit(lazyInit);

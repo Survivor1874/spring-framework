@@ -140,6 +140,7 @@ public abstract class PropertiesLoaderSupport {
 
 
 	/**
+	 * // 把加载的所有的 properties 文件中的键值对都取出来
 	 * Return a merged Properties instance containing both the
 	 * loaded properties and properties set on this FactoryBean.
 	 */

@@ -93,6 +93,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 	@Override
 	public void registerBeanDefinitions(Document doc, XmlReaderContext readerContext) {
 		this.readerContext = readerContext;
+		// 在XmlBeanDefinitionReader.doLoadBeanDefinitions(InputSource inputSource, Resource resource)方法中
+		// 将Xml文件转换成Document对象;
 		doRegisterBeanDefinitions(doc.getDocumentElement());
 	}
 
@@ -126,6 +128,8 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		// then ultimately reset this.delegate back to its original (parent) reference.
 		// this behavior emulates a stack of delegates without actually necessitating one.
 		// BeanDefinitionParserDelegate代理对象,主要用于BeanDefinition的解析与注册
+		// 1.根据Element root创建**BeanDefinitionParserDelegate**对象
+		// 2.解析Xml文件头中的一些属性配置到 BeanDefinitionParserDelegate属性（DocumentDefaultsDefinition）defaults；
 		BeanDefinitionParserDelegate parent = this.delegate;
 		this.delegate = createDelegate(getReaderContext(), root, parent);
 
@@ -145,13 +149,13 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 			}
 		}
 
-		// 解析前置处理,模板方法,留给子类实现
+		// 解析前置处理,模板方法,留给子类实现 子类可以重写这个方法来处理自定义xml文件
 		preProcessXml(root);
 
 		// 实际的BeanDefinition解析与注册
 		parseBeanDefinitions(root, this.delegate);
 
-		// 解析后置处理,模板方法,留给子类实现
+		// 解析后置处理,模板方法,留给子类实现 子类可以重写这个方法来处理自定义xml文件
 		postProcessXml(root);
 
 		this.delegate = parent;

@@ -166,6 +166,7 @@ public abstract class HttpServletBean extends HttpServlet implements Environment
 		}
 
 		// Let subclasses do whatever initialization they like.
+		// DispatcherServlet在初始化的时候会建立自己的容器，叫做SpringMVC 容器
 		initServletBean();
 	}
 
