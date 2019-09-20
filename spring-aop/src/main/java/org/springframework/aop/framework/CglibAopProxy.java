@@ -84,12 +84,40 @@ import org.springframework.util.ObjectUtils;
 class CglibAopProxy implements AopProxy, Serializable {
 
 	// Constants for CGLIB callback array indices
+
+	/**
+	 * 一般的aop调用
+	 */
 	private static final int AOP_PROXY = 0;
+
+	/**
+	 * 直接调用目标方法
+	 */
 	private static final int INVOKE_TARGET = 1;
+
+	/**
+	 * 不能覆盖的方法，比如finalize方法。
+	 */
 	private static final int NO_OVERRIDE = 2;
+
+	/**
+	 * 直接对原来的bean进行方法调用。
+	 */
 	private static final int DISPATCH_TARGET = 3;
+
+	/**
+	 * 对Advised接口方法有效
+	 */
 	private static final int DISPATCH_ADVISED = 4;
+
+	/**
+	 * 对equals方法拦截
+	 */
 	private static final int INVOKE_EQUALS = 5;
+
+	/**
+	 * 对hashCode方法拦截
+	 */
 	private static final int INVOKE_HASHCODE = 6;
 
 
@@ -155,6 +183,17 @@ class CglibAopProxy implements AopProxy, Serializable {
 		return getProxy(null);
 	}
 
+
+	/**
+	 * Spring对于cglib创建代理，内部默认使用ObjenesisCglibAopProxy来创建代理bean，
+	 * 它是CglibAopProxy的子类，并且重写了createProxyClassAndInstance方法。
+	 * Objenesis是一个类库，可以绕过构造器创建对象。
+	 * cglib使用Enhancer来生成代理类，生成的类实质上是被代理类的子类。
+	 * 更多关于Enhancer的信息，可以参考我的博文cglib之Enhancer(https://www.cnblogs.com/micrari/p/7565632.html)。
+	 * @param classLoader the class loader to create the proxy with
+	 * (or {@code null} for the low-level proxy facility's default)
+	 * @return
+	 */
 	@Override
 	public Object getProxy(@Nullable ClassLoader classLoader) {
 		if (logger.isTraceEnabled()) {
@@ -162,6 +201,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 		}
 
 		try {
+
+			// advised其实就是创建CglibAopProxy的时候构造参数中传递的config配置。
 			Class<?> rootClass = this.advised.getTargetClass();
 			Assert.state(rootClass != null, "Target class must be available for creating a CGLIB proxy");
 
@@ -186,21 +227,27 @@ class CglibAopProxy implements AopProxy, Serializable {
 					enhancer.setUseCache(false);
 				}
 			}
+
+			// 配置enhancer如代理接口,回调等。
 			enhancer.setSuperclass(proxySuperClass);
 			enhancer.setInterfaces(AopProxyUtils.completeProxiedInterfaces(this.advised));
 			enhancer.setNamingPolicy(SpringNamingPolicy.INSTANCE);
 			enhancer.setStrategy(new ClassLoaderAwareUndeclaredThrowableStrategy(classLoader));
 
+			// 这里生成callback方法的逻辑是阅读源码的重点。
 			Callback[] callbacks = getCallbacks(rootClass);
 			Class<?>[] types = new Class<?>[callbacks.length];
 			for (int x = 0; x < types.length; x++) {
 				types[x] = callbacks[x].getClass();
 			}
+
+			// callbackFilter的作用主要是建立了method与callback编号的映射。
 			// fixedInterceptorMap only populated at this point, after getCallbacks call above
 			enhancer.setCallbackFilter(new ProxyCallbackFilter(
 					this.advised.getConfigurationOnlyCopy(), this.fixedInterceptorMap, this.fixedInterceptorOffset));
 			enhancer.setCallbackTypes(types);
 
+			// 生成代理的class以及代理bean实例。
 			// Generate the proxy class and create a proxy instance.
 			return createProxyClassAndInstance(enhancer, callbacks);
 		}

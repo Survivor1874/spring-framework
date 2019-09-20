@@ -627,11 +627,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		 * Spring为了解决单例bean的循环引用问题，会在bean还没有完全初始化完毕前通过添加singletonFactory
 		 * 使得其它bean可以拿到某个bean的实例引用。
 		 */
-		boolean earlySingletonExposure = (mbd.isSingleton()
-				// 允许自动尝试解决循依赖
-				&& this.allowCircularReferences
-				// 单例正在创建中
-				&& isSingletonCurrentlyInCreation(beanName));
+		boolean earlySingletonExposure =
+				// 只有单例模式才会解决循环依赖 原型模式不会
+				(mbd.isSingleton()
+						// 允许自动尝试解决循依赖
+						&& this.allowCircularReferences
+						// 单例正在创建中
+						&& isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Eagerly caching bean '" + beanName + "' to allow for resolving potential circular references");
@@ -728,8 +730,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		try {
 			registerDisposableBeanIfNecessary(beanName, bean, mbd);
 		} catch (BeanDefinitionValidationException ex) {
-			throw new BeanCreationException(
-					mbd.getResourceDescription(), beanName, "Invalid destruction signature", ex);
+			throw new BeanCreationException(mbd.getResourceDescription(), beanName, "Invalid destruction signature", ex);
 		}
 
 		return exposedObject;
@@ -1600,6 +1601,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
 					boolean eager = !PriorityOrdered.class.isInstance(bw.getWrappedInstance());
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
+
+					// 解析依赖
 					Object autowiredArgument = resolveDependency(desc, beanName, autowiredBeanNames, converter);
 					if (autowiredArgument != null) {
 						pvs.add(propertyName, autowiredArgument);
