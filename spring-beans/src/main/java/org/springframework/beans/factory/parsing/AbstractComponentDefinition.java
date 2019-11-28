@@ -42,6 +42,7 @@ public abstract class AbstractComponentDefinition implements ComponentDefinition
 
 	/**
 	 * Returns an empty array.
+	 * 返回BeanDefinition空数组。
 	 */
 	@Override
 	public BeanDefinition[] getBeanDefinitions() {
@@ -58,6 +59,7 @@ public abstract class AbstractComponentDefinition implements ComponentDefinition
 
 	/**
 	 * Returns an empty array.
+	 * 返回BeanReference空数组。
 	 */
 	@Override
 	public BeanReference[] getBeanReferences() {

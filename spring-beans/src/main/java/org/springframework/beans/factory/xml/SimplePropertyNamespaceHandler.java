@@ -37,12 +37,14 @@ import org.springframework.lang.Nullable;
  *
  * <pre class="code">
  * &lt;bean id=&quot;rob&quot; class=&quot;..TestBean&quot; p:name=&quot;Rob Harrop&quot; p:spouse-ref=&quot;sally&quot;/&gt;</pre>
- *
+ * <p>
  * Here the '{@code p:name}' corresponds directly to the '{@code name}'
  * property on class '{@code TestBean}'. The '{@code p:spouse-ref}'
  * attributes corresponds to the '{@code spouse}' property and, rather
  * than being the concrete value, it contains the name of the bean that will
  * be injected into that property.
+ * <p>
+ * 可以将自定义的属性直接映射到 Bean 属性
  *
  * @author Rob Harrop
  * @author Juergen Hoeller
@@ -65,6 +67,14 @@ public class SimplePropertyNamespaceHandler implements NamespaceHandler {
 		return null;
 	}
 
+	/**
+	 * 解析属性是 -ref 结尾的，指定的是RuntimeBeanReference类型的bean。
+	 *
+	 * @param node
+	 * @param definition    the current bean definition
+	 * @param parserContext the object encapsulating the current state of the parsing process
+	 * @return
+	 */
 	@Override
 	public BeanDefinitionHolder decorate(Node node, BeanDefinitionHolder definition, ParserContext parserContext) {
 		if (node instanceof Attr) {
@@ -73,14 +83,12 @@ public class SimplePropertyNamespaceHandler implements NamespaceHandler {
 			String propertyValue = attr.getValue();
 			MutablePropertyValues pvs = definition.getBeanDefinition().getPropertyValues();
 			if (pvs.contains(propertyName)) {
-				parserContext.getReaderContext().error("Property '" + propertyName + "' is already defined using " +
-						"both <property> and inline syntax. Only one approach may be used per property.", attr);
+				parserContext.getReaderContext().error("Property '" + propertyName + "' is already defined using " + "both <property> and inline syntax. Only one approach may be used per property.", attr);
 			}
 			if (propertyName.endsWith(REF_SUFFIX)) {
 				propertyName = propertyName.substring(0, propertyName.length() - REF_SUFFIX.length());
 				pvs.add(Conventions.attributeNameToPropertyName(propertyName), new RuntimeBeanReference(propertyValue));
-			}
-			else {
+			} else {
 				pvs.add(Conventions.attributeNameToPropertyName(propertyName), propertyValue);
 			}
 		}

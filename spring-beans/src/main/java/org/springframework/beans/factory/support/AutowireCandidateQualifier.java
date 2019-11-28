@@ -23,11 +23,13 @@ import org.springframework.util.Assert;
  * Qualifier for resolving autowire candidates. A bean definition that
  * includes one or more such qualifiers enables fine-grained matching
  * against annotations on a field or parameter to be autowired.
+ * <p>
+ * AutowireCandidateQualifier 依赖注入候选确定实现，解析@Autowire、@Qualifier注解。
  *
  * @author Mark Fisher
  * @author Juergen Hoeller
- * @since 2.5
  * @see org.springframework.beans.factory.annotation.Qualifier
+ * @since 2.5
  */
 @SuppressWarnings("serial")
 public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
@@ -43,6 +45,7 @@ public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
 	/**
 	 * Construct a qualifier to match against an annotation of the
 	 * given type.
+	 *
 	 * @param type the annotation type
 	 */
 	public AutowireCandidateQualifier(Class<?> type) {
@@ -54,6 +57,7 @@ public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
 	 * given type name.
 	 * <p>The type name may match the fully-qualified class name of
 	 * the annotation or the short class name (without the package).
+	 *
 	 * @param typeName the name of the annotation type
 	 */
 	public AutowireCandidateQualifier(String typeName) {
@@ -65,7 +69,8 @@ public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
 	 * Construct a qualifier to match against an annotation of the
 	 * given type whose {@code value} attribute also matches
 	 * the specified value.
-	 * @param type the annotation type
+	 *
+	 * @param type  the annotation type
 	 * @param value the annotation value to match
 	 */
 	public AutowireCandidateQualifier(Class<?> type, Object value) {
@@ -78,8 +83,9 @@ public class AutowireCandidateQualifier extends BeanMetadataAttributeAccessor {
 	 * the specified value.
 	 * <p>The type name may match the fully-qualified class name of
 	 * the annotation or the short class name (without the package).
+	 *
 	 * @param typeName the name of the annotation type
-	 * @param value the annotation value to match
+	 * @param value    the annotation value to match
 	 */
 	public AutowireCandidateQualifier(String typeName, Object value) {
 		Assert.notNull(typeName, "Type name must not be null");

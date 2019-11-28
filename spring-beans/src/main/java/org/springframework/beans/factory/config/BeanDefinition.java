@@ -29,6 +29,8 @@ import org.springframework.lang.Nullable;
  * <p>This is just a minimal interface: The main intention is to allow a
  * {@link BeanFactoryPostProcessor} to introspect and modify property values
  * and other bean metadata.
+ * <p>
+ * 描述一个bean的元数据信息，包括bean的属性值，构造参数值，具体实现，BeanFactoryPostProcessor可以对BeanDefinition进行干预。
  *
  * @author Juergen Hoeller
  * @author Rob Harrop
@@ -42,6 +44,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	/**
 	 * Scope identifier for the standard singleton scope: "singleton".
 	 * <p>Note that extended bean factories might support further scopes.
+	 * bean的scope singleton、prototype。
 	 *
 	 * @see #setScope
 	 */
@@ -114,6 +117,7 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * even be empty in case of a factory bean reference that a method is called on.
 	 * Hence, do <i>not</i> consider this to be the definitive bean type at runtime but
 	 * rather only use it for parsing purposes at the individual bean definition level.
+	 * 获取beanDefinition指定的className。
 	 *
 	 * @see #getParentName()
 	 * @see #getFactoryBeanName()
@@ -124,6 +128,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 
 	/**
 	 * Override the target scope of this bean, specifying a new scope name.
+	 * <p>
+	 * 覆盖beanDefinition的scope属性。
 	 *
 	 * @see #SCOPE_SINGLETON
 	 * @see #SCOPE_PROTOTYPE
@@ -141,6 +147,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * Set whether this bean should be lazily initialized.
 	 * <p>If {@code false}, the bean will get instantiated on startup by bean
 	 * factories that perform eager initialization of singletons.
+	 * <p>
+	 * 覆盖BeanDefinition是否延迟初始化属性。
 	 */
 	void setLazyInit(boolean lazyInit);
 
@@ -168,6 +176,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * It does not affect explicit references by name, which will get resolved even
 	 * if the specified bean is not marked as an autowire candidate. As a consequence,
 	 * autowiring by name will nevertheless inject a bean if the name matches.
+	 * <p>
+	 * 覆盖bean的自动依赖注入的方式。
 	 */
 	void setAutowireCandidate(boolean autowireCandidate);
 
@@ -180,6 +190,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	 * Set whether this bean is a primary autowire candidate.
 	 * <p>If this value is {@code true} for exactly one bean among multiple
 	 * matching candidates, it will serve as a tie-breaker.
+	 * <p>
+	 * 如果bean被自动依赖注入的时候，按类型注入，这个类型有多个实现，注入这个。
 	 */
 	void setPrimary(boolean primary);
 
@@ -191,6 +203,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	/**
 	 * Specify the factory bean to use, if any.
 	 * This the name of the bean to call the specified factory method on.
+	 * <p>
+	 * 设置factoryBean name。
 	 *
 	 * @see #setFactoryMethodName
 	 */
@@ -222,6 +236,8 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	/**
 	 * Return the constructor argument values for this bean.
 	 * <p>The returned instance can be modified during bean factory post-processing.
+	 * <p>
+	 * 返回bean的BeanDefinition中的构造参数值。
 	 *
 	 * @return the ConstructorArgumentValues object (never {@code null})
 	 */
@@ -239,6 +255,9 @@ public interface BeanDefinition extends AttributeAccessor, BeanMetadataElement {
 	/**
 	 * Return the property values to be applied to a new instance of the bean.
 	 * <p>The returned instance can be modified during bean factory post-processing.
+	 * <p>
+	 * <p>
+	 * 获取beanDefinition的属性值。
 	 *
 	 * @return the MutablePropertyValues object (never {@code null})
 	 */

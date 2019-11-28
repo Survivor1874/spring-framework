@@ -65,14 +65,16 @@ import org.springframework.beans.factory.config.BeanReference;
  * {@link BeanDefinition#ROLE_INFRASTRUCTURE INFRASTRUCTURE role identifier}. {@link BeanDefinition BeanDefinitions}
  * classified with this role are completely unimportant to the end user and are required only for
  * internal implementation reasons.
+ * <p>
+ * 组合的 BeanDefinition 抽象，可以把一组 BeanDefinition 和 RuntimeBeanReferences 组装成一个 BeanDefinition。
  *
  * @author Rob Harrop
  * @author Juergen Hoeller
- * @since 2.0
  * @see AbstractComponentDefinition
  * @see CompositeComponentDefinition
  * @see BeanComponentDefinition
  * @see ReaderEventListener#componentRegistered(ComponentDefinition)
+ * @since 2.0
  */
 public interface ComponentDefinition extends BeanMetadataElement {
 
@@ -97,6 +99,9 @@ public interface ComponentDefinition extends BeanMetadataElement {
 	 * other {@link BeanDefinition BeanDefinitions} via {@link BeanReference references},
 	 * however these are <strong>not</strong> included as they may be not available immediately.
 	 * Important {@link BeanReference BeanReferences} are available from {@link #getBeanReferences()}.
+	 * <p>
+	 * 返回组合 BeanDefinition 中的所有 BeanDefinition。
+	 *
 	 * @return the array of BeanDefinitions, or an empty array if none
 	 */
 	BeanDefinition[] getBeanDefinitions();
@@ -106,6 +111,7 @@ public interface ComponentDefinition extends BeanMetadataElement {
 	 * inner beans within this component.
 	 * <p>Other inner beans may exist within the associated {@link BeanDefinition BeanDefinitions},
 	 * however these are not considered to be needed for validation or for user visualization.
+	 *
 	 * @return the array of BeanDefinitions, or an empty array if none
 	 */
 	BeanDefinition[] getInnerBeanDefinitions();
@@ -116,6 +122,9 @@ public interface ComponentDefinition extends BeanMetadataElement {
 	 * <p>Other {@link BeanReference BeanReferences} may exist within the associated
 	 * {@link BeanDefinition BeanDefinitions}, however these are not considered
 	 * to be needed for validation or for user visualization.
+	 * <p>
+	 * 返回组合 BeanDefinition 中的 BeanReference。
+	 *
 	 * @return the array of BeanReferences, or an empty array if none
 	 */
 	BeanReference[] getBeanReferences();

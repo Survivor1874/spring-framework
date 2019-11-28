@@ -42,7 +42,7 @@ import org.springframework.util.StringUtils;
  * <pre class="code">
  * &lt;bean id=&quot;author&quot; class=&quot;..TestBean&quot; c:name=&quot;Enescu&quot; c:work-ref=&quot;compositions&quot;/&gt;
  * </pre>
- *
+ * <p>
  * Here the '{@code c:name}' corresponds directly to the '{@code name}
  * ' argument declared on the constructor of class '{@code TestBean}'. The
  * '{@code c:work-ref}' attributes corresponds to the '{@code work}'
@@ -52,10 +52,12 @@ import org.springframework.util.StringUtils;
  * <b>Note</b>: This implementation supports only named parameters - there is no
  * support for indexes or types. Further more, the names are used as hints by
  * the container which, by default, does type introspection.
+ * <p>
+ * 可以直接把自定义属性值添加到 bean 中，简写的构造方法参数属性。
  *
  * @author Costin Leau
- * @since 3.1
  * @see SimplePropertyNamespaceHandler
+ * @since 3.1
  */
 public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 
@@ -76,6 +78,14 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 		return null;
 	}
 
+	/**
+	 * 按index顺序解析名称以为-ref结尾的属性，值也是RuntimeBeanReference这个类型的。
+	 *
+	 * @param node
+	 * @param definition    the current bean definition
+	 * @param parserContext the object encapsulating the current state of the parsing process
+	 * @return
+	 */
 	@Override
 	public BeanDefinitionHolder decorate(Node node, BeanDefinitionHolder definition, ParserContext parserContext) {
 		if (node instanceof Attr) {
@@ -108,8 +118,7 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 					int index = -1;
 					try {
 						index = Integer.parseInt(arg);
-					}
-					catch (NumberFormatException ex) {
+					} catch (NumberFormatException ex) {
 						parserContext.getReaderContext().error(
 								"Constructor argument '" + argName + "' specifies an invalid integer", attr);
 					}
@@ -120,8 +129,8 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 
 					if (cvs.hasIndexedArgumentValue(index)) {
 						parserContext.getReaderContext().error(
-								"Constructor argument '" + argName + "' with index "+ index+" already defined using <constructor-arg>." +
-								" Only one approach may be used per argument.", attr);
+								"Constructor argument '" + argName + "' with index " + index + " already defined using <constructor-arg>." +
+										" Only one approach may be used per argument.", attr);
 					}
 
 					cvs.addIndexedArgumentValue(index, valueHolder);
@@ -133,7 +142,7 @@ public class SimpleConstructorNamespaceHandler implements NamespaceHandler {
 				if (containsArgWithName(name, cvs)) {
 					parserContext.getReaderContext().error(
 							"Constructor argument '" + argName + "' already defined using <constructor-arg>." +
-							" Only one approach may be used per argument.", attr);
+									" Only one approach may be used per argument.", attr);
 				}
 				valueHolder.setName(Conventions.attributeNameToPropertyName(argName));
 				cvs.addGenericArgumentValue(valueHolder);

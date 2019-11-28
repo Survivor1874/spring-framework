@@ -55,17 +55,20 @@ import org.springframework.util.StringUtils;
  * @see ChildBeanDefinition
  */
 @SuppressWarnings("serial")
-public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor
-		implements BeanDefinition, Cloneable {
+public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor implements BeanDefinition, Cloneable {
 
 	/**
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
 	 * status unless overridden from a parent bean definition (if applicable).
+	 * <p>
+	 * BeanDefinition的scope属性默认是单例。
 	 */
 	public static final String SCOPE_DEFAULT = "";
 
 	/**
 	 * Constant that indicates no autowiring at all.
+	 * <p>
+	 * bean自动注入属性值是不自动注入
 	 *
 	 * @see #setAutowireMode
 	 */
@@ -73,6 +76,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Constant that indicates autowiring bean properties by name.
+	 * <p>
+	 * 按名称注入。
 	 *
 	 * @see #setAutowireMode
 	 */
@@ -80,6 +85,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Constant that indicates autowiring bean properties by type.
+	 * <p>
+	 * 按类型注入。
 	 *
 	 * @see #setAutowireMode
 	 */
@@ -87,6 +94,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	/**
 	 * Constant that indicates autowiring a constructor.
+	 * <p>
+	 * 按构造方法注入。
 	 *
 	 * @see #setAutowireMode
 	 */
@@ -146,6 +155,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	public static final String INFER_METHOD = "(inferred)";
 
 
+	/**
+	 * 保存了beanClass对象。
+	 */
 	@Nullable
 	private volatile Object beanClass;
 
@@ -154,12 +166,21 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private boolean abstractFlag = false;
 
+	/**
+	 * 默认不延迟初始化。
+	 */
 	private boolean lazyInit = false;
 
+	/**
+	 * 默认不自动注入。
+	 */
 	private int autowireMode = AUTOWIRE_NO;
 
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
+	/**
+	 * bean初始化依赖的beanNames。
+	 */
 	@Nullable
 	private String[] dependsOn;
 
@@ -169,6 +190,9 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 
 	private final Map<String, AutowireCandidateQualifier> qualifiers = new LinkedHashMap<>();
 
+	/**
+	 * 属性指定创建bean的回调逻辑。
+	 */
 	@Nullable
 	private Supplier<?> instanceSupplier;
 
@@ -182,6 +206,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private String factoryMethodName;
 
+
+	/**
+	 * 构造参数值，属性值。
+	 */
 	@Nullable
 	private ConstructorArgumentValues constructorArgumentValues;
 
@@ -191,6 +219,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	@Nullable
 	private MethodOverrides methodOverrides;
 
+
+	/**
+	 * 初始化方法和销毁方法。
+	 */
 	@Nullable
 	private String initMethodName;
 
@@ -485,6 +517,8 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Return whether this a <b>Singleton</b>, with a single shared instance
 	 * returned from all calls.
+	 * <p>
+	 * 是否单例，SCOPE_SINGLETON = "singleton"，SCOPE_DEFAULT = ""，scope不指定默认就是单例模式
 	 *
 	 * @see #SCOPE_SINGLETON
 	 */
@@ -569,6 +603,10 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	/**
 	 * Return the resolved autowire code,
 	 * (resolving AUTOWIRE_AUTODETECT to AUTOWIRE_CONSTRUCTOR or AUTOWIRE_BY_TYPE).
+	 * 如果指定了构造参数采取构造参数注入，
+	 * 如果没有指定构造参数就采用按类型自动注入，构造参数注入，
+	 * 构造参数多了会显得代码臃肿，构造参数少了可以。
+	 * 这里可以看出优先使用的是构造参数注入。
 	 *
 	 * @see #AUTOWIRE_AUTODETECT
 	 * @see #AUTOWIRE_CONSTRUCTOR

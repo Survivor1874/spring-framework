@@ -45,6 +45,9 @@ public class UtilNamespaceHandler extends NamespaceHandlerSupport {
 	private static final String SCOPE_ATTRIBUTE = "scope";
 
 
+	/**
+	 * 可以看到这个 namespaceHandler 解析 constant、list、set、map、properties 集合。
+	 */
 	@Override
 	public void init() {
 		registerBeanDefinitionParser("constant", new ConstantBeanDefinitionParser());
@@ -118,16 +121,25 @@ public class UtilNamespaceHandler extends NamespaceHandlerSupport {
 			return ListFactoryBean.class;
 		}
 
+		/**
+		 * 解析list-class标签和这个标签的targetListClass属性最后添加到BeanDefinitionBuilder中。
+		 *
+		 * @param element       the XML element being parsed
+		 * @param parserContext the object encapsulating the current state of the parsing process
+		 * @param builder       used to define the {@code BeanDefinition}
+		 */
 		@Override
 		protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 			List<Object> parsedList = parserContext.getDelegate().parseListElement(element, builder.getRawBeanDefinition());
 			builder.addPropertyValue("sourceList", parsedList);
 
+			//  解析list-class标签
 			String listClass = element.getAttribute("list-class");
 			if (StringUtils.hasText(listClass)) {
 				builder.addPropertyValue("targetListClass", listClass);
 			}
 
+			//  获取scope属性值
 			String scope = element.getAttribute(SCOPE_ATTRIBUTE);
 			if (StringUtils.hasLength(scope)) {
 				builder.setScope(scope);
@@ -143,6 +155,13 @@ public class UtilNamespaceHandler extends NamespaceHandlerSupport {
 			return SetFactoryBean.class;
 		}
 
+		/**
+		 * 解析set-class标签和targetSetClass属性添加到BeanDefinitionBuilder中。
+		 *
+		 * @param element       the XML element being parsed
+		 * @param parserContext the object encapsulating the current state of the parsing process
+		 * @param builder       used to define the {@code BeanDefinition}
+		 */
 		@Override
 		protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 			Set<Object> parsedSet = parserContext.getDelegate().parseSetElement(element, builder.getRawBeanDefinition());
@@ -168,6 +187,13 @@ public class UtilNamespaceHandler extends NamespaceHandlerSupport {
 			return MapFactoryBean.class;
 		}
 
+		/**
+		 * 解析map-class标签和targetMapClass属性添加到BeanDefinitionBuilder中。
+		 *
+		 * @param element       the XML element being parsed
+		 * @param parserContext the object encapsulating the current state of the parsing process
+		 * @param builder       used to define the {@code BeanDefinition}
+		 */
 		@Override
 		protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 			Map<Object, Object> parsedMap = parserContext.getDelegate().parseMapElement(element, builder.getRawBeanDefinition());
@@ -193,6 +219,17 @@ public class UtilNamespaceHandler extends NamespaceHandlerSupport {
 			return PropertiesFactoryBean.class;
 		}
 
+		/**
+		 * 解析 location 属性，properties 文件的路径，文件可以有多个用,分开，
+		 * 把 locations 属性值是 properties 文件数组添加到 BeanDefinitionBuilder 中，
+		 * 添加 BeanDefinitionBuilder ignoreResourceNotFound 属性，也就是配置的 ignore-resource-not-found 参数值，
+		 * 没找到属性文件是否忽略。添加 BeanDefinitionBuilder 的 localOverride 属性，local-override 参数值，
+		 * 属性值重复了是否可以覆盖。
+		 *
+		 * @param element       the XML element being parsed
+		 * @param parserContext the object encapsulating the current state of the parsing process
+		 * @param builder       used to define the {@code BeanDefinition}
+		 */
 		@Override
 		protected void doParse(Element element, ParserContext parserContext, BeanDefinitionBuilder builder) {
 			Properties parsedProps = parserContext.getDelegate().parsePropsElement(element);

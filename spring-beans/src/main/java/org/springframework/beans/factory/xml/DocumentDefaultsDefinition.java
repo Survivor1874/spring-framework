@@ -23,6 +23,11 @@ import org.springframework.lang.Nullable;
  * Simple JavaBean that holds the defaults specified at the {@code <beans>}
  * level in a standard Spring XML bean definition document:
  * {@code default-lazy-init}, {@code default-autowire}, etc.
+ * <p>
+ * DocumentDefaultsDefinition是DefaultsDefinition的实现，
+ * 提供了属性lazyInit是否延迟初始化，autowire是否自动注册，
+ * merge BeanDefinition属性是否可以merge，autowireCandidates属性依赖注入的模式，
+ * initMethod初始化方法，destroyMethod销毁方法，source BeanDefinition元数据对象。
  *
  * @author Juergen Hoeller
  * @since 2.0.2

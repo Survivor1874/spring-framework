@@ -22,6 +22,8 @@ import org.springframework.util.Assert;
 /**
  * Immutable placeholder class used for a property value object when it's
  * a reference to another bean in the factory, to be resolved at runtime.
+ * <p>
+ * RuntimeBeanReference实现，一个属性值不可变占位符类，引用工厂的另一个bean，在运行时解析。
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -42,6 +44,7 @@ public class RuntimeBeanReference implements BeanReference {
 	 * Create a new RuntimeBeanReference to the given bean name,
 	 * without explicitly marking it as reference to a bean in
 	 * the parent factory.
+	 *
 	 * @param beanName name of the target bean
 	 */
 	public RuntimeBeanReference(String beanName) {
@@ -52,9 +55,10 @@ public class RuntimeBeanReference implements BeanReference {
 	 * Create a new RuntimeBeanReference to the given bean name,
 	 * with the option to mark it as reference to a bean in
 	 * the parent factory.
+	 *
 	 * @param beanName name of the target bean
 	 * @param toParent whether this is an explicit reference to
-	 * a bean in the parent factory
+	 *                 a bean in the parent factory
 	 */
 	public RuntimeBeanReference(String beanName, boolean toParent) {
 		Assert.hasText(beanName, "'beanName' must not be empty");

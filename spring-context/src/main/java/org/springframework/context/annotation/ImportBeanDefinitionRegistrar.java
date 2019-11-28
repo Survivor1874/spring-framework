@@ -44,10 +44,10 @@ import org.springframework.core.type.AnnotationMetadata;
  *
  * @author Chris Beams
  * @author Juergen Hoeller
- * @since 3.1
  * @see Import
  * @see ImportSelector
  * @see Configuration
+ * @since 3.1
  */
 public interface ImportBeanDefinitionRegistrar {
 
@@ -59,10 +59,11 @@ public interface ImportBeanDefinitionRegistrar {
 	 * class processing.
 	 * <p>The default implementation delegates to
 	 * {@link #registerBeanDefinitions(AnnotationMetadata, BeanDefinitionRegistry)}.
-	 * @param importingClassMetadata annotation metadata of the importing class
-	 * @param registry current bean definition registry
+	 *
+	 * @param importingClassMetadata  annotation metadata of the importing class
+	 * @param registry                current bean definition registry
 	 * @param importBeanNameGenerator the configuration-level bean name generator
-	 * strategy for imported beans
+	 *                                strategy for imported beans
 	 * @since 5.2
 	 */
 	default void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry, BeanNameGenerator importBeanNameGenerator) {
@@ -77,8 +78,9 @@ public interface ImportBeanDefinitionRegistrar {
 	 * registered here, due to lifecycle constraints related to {@code @Configuration}
 	 * class processing.
 	 * <p>The default implementation is empty.
+	 *
 	 * @param importingClassMetadata annotation metadata of the importing class
-	 * @param registry current bean definition registry
+	 * @param registry               current bean definition registry
 	 */
 	default void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
 	}

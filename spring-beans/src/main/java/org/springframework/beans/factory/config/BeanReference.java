@@ -26,6 +26,8 @@ import org.springframework.beans.BeanMetadataElement;
  * <p>Serves as common interface implemented by any kind of bean reference
  * holder, such as {@link RuntimeBeanReference RuntimeBeanReference} and
  * {@link RuntimeBeanNameReference RuntimeBeanNameReference}.
+ * <p>
+ * BeanReference接口，引用对象抽象。
  *
  * @author Juergen Hoeller
  * @since 2.0
