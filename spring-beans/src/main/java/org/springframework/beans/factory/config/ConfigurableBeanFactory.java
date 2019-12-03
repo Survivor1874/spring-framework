@@ -41,6 +41,8 @@ import org.springframework.util.StringValueResolver;
  * {@link org.springframework.beans.factory.ListableBeanFactory} for typical
  * needs. This extended interface is just meant to allow for framework-internal
  * plug'n'play and for special access to bean factory configuration methods.
+ * <p>
+ * 配置接口实现的BeanFactory，在spring框架内部使用。
  *
  * @author Juergen Hoeller
  * @see org.springframework.beans.factory.BeanFactory
@@ -71,6 +73,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * Set the parent of this bean factory.
 	 * <p>Note that the parent cannot be changed: It should only be set outside
 	 * a constructor if it isn't available at the time of factory instantiation.
+	 * <p>
+	 * 设置上一级BeanFactory。
 	 *
 	 * @param parentBeanFactory the parent BeanFactory
 	 * @throws IllegalStateException if this factory is already associated with
@@ -158,6 +162,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	/**
 	 * Specify a Spring 3.0 ConversionService to use for converting
 	 * property values, as an alternative to JavaBeans PropertyEditors.
+	 * <p>
+	 * 设置类型转换器。
 	 *
 	 * @since 3.0
 	 */
@@ -259,6 +265,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * {@link org.springframework.core.Ordered} interface will be ignored. Note
 	 * that autodetected post-processors (e.g. as beans in an ApplicationContext)
 	 * will always be applied after programmatically registered ones.
+	 * <p>
+	 * 添加BeanPostProcessor到BeanFactory中，在配置bean的时候，如果有多个执行顺序按添加的顺序执行。
 	 *
 	 * @param beanPostProcessor the post-processor to register
 	 */
@@ -324,6 +332,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * <p>Typically invoked during factory configuration, but can also be
 	 * used for runtime registration of aliases. Therefore, a factory
 	 * implementation should synchronize alias access.
+	 * <p>
+	 * 注册别名。
 	 *
 	 * @param beanName the canonical name of the target bean
 	 * @param alias    the alias to be registered for the bean
@@ -356,6 +366,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 
 	/**
 	 * Determine whether the bean with the given name is a FactoryBean.
+	 * <p>
+	 * 判断bean是否实现了factoryBean接口。
 	 *
 	 * @param name the name of the bean to check
 	 * @return whether the bean is a FactoryBean
@@ -387,6 +399,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	/**
 	 * Register a dependent bean for the given bean,
 	 * to be destroyed before the given bean is destroyed.
+	 * <p>
+	 * 注册一个依赖的bean给指定的bean，在这个bean销毁之前销毁。
 	 *
 	 * @param beanName          the name of the bean
 	 * @param dependentBeanName the name of the dependent bean
@@ -396,6 +410,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 
 	/**
 	 * Return the names of all beans which depend on the specified bean, if any.
+	 *
+	 * 获取指定bean依赖的bean。
 	 *
 	 * @param beanName the name of the bean
 	 * @return the array of dependent bean names, or an empty array if none
@@ -418,6 +434,8 @@ public interface ConfigurableBeanFactory extends HierarchicalBeanFactory, Single
 	 * obtained from this factory) according to its bean definition.
 	 * <p>Any exception that arises during destruction should be caught
 	 * and logged instead of propagated to the caller of this method.
+	 *
+	 * 销毁bean，destroySingletons销毁BeanFactory中的所有的单例bean。
 	 *
 	 * @param beanName     the name of the bean definition
 	 * @param beanInstance the bean instance to destroy

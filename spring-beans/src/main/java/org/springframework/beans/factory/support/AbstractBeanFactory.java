@@ -98,6 +98,8 @@ import org.springframework.util.StringValueResolver;
  * for a given bean name and creating a bean instance for a given bean definition,
  * respectively. Default implementations of those operations can be found in
  * {@link DefaultListableBeanFactory} and {@link AbstractAutowireCapableBeanFactory}.
+ * <p>
+ * BeanFactory的抽象实现。
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -169,16 +171,19 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * BeanPostProcessors to apply in createBean.
+	 * BeanPostProcessor都保存在beanPostProcessors list中。
 	 */
 	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
 
 	/**
 	 * Indicates whether any InstantiationAwareBeanPostProcessors have been registered.
+	 * 是否有bean初始化类的BeanPostProcessor。
 	 */
 	private volatile boolean hasInstantiationAwareBeanPostProcessors;
 
 	/**
 	 * Indicates whether any DestructionAwareBeanPostProcessors have been registered.
+	 * 是否有bean销毁类的BeanPostProcessor。
 	 */
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
 
@@ -278,27 +283,27 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * 而AbstractBeanFactory中传递给getSingleton方法的ObjectFactory#getObject的具体实现是调用createBean，
 	 * 这个方法是真正创建并初始化bean的方法，由子类AbstractAutowireCapableBeanFactory完成。
 	 * 对于获取原型bean则简单多了，不用关心放到桶里缓存的事情，直接调用createBean创建就是了。
-	 *
-	 * 	 * 不是所有的循环依赖Spring都能够解决的。
-	 * 	 * <p>
-	 * 	 * 对于最简单的情况，bean为单例,且使用Autowired或者setter注入，Spring是可以解决这样的循环依赖的。
-	 * 	 * 通过上面的代码中我们可以看出，在一个Bean实例化后,会调用addSingletonFactory方法，
-	 * 	 * 在IOC容器中通过一个ObjectFactory暴露出可以获取还未完全初始化完毕的bean引用。
-	 * 	 * 若存在循环依赖，则依赖的bean可以在调用getBean时通过getSingleton方法获取到循环依赖的bean。
-	 * 	 * <p>
-	 * 	 * 但是Spring是不允许出现原型环的，举例来说,BeanA和BeanB循环依赖且scope都为prototype。
-	 * 	 * 因为prototype的bean，不会触发addSingletonFactory，即每次get这样的bean都会新创建一个。
-	 * 	 * 所以创建BeanA需要注入一个BeanB，而这个BeanB又需要注入一个新的BeanA，这样的循环依赖是没办法解决的。
-	 * 	 * Spring会判断当前bean是否是prototype并且已经在创建中，然后抛出异常。
-	 * 	 * <p>
-	 * 	 * 对于构造器依赖，可以作一下讨论，下面讨论的bean的scope都为单例
-	 * 	 * 如果BeanA构造器中依赖BeanB，并且BeanA先创建，则无论BeanB以哪种形式依赖BeanA，都没办法解决这样的循环依赖。
-	 * 	 * 因为实例化BeanA需要先得到BeanB（此时还未提前暴露引用），
-	 * 	 * BeanB依赖BeanA，但是拿不到BeanA提前暴露的引用，这就形成了无限循环。
-	 * 	 * 这种情况会在BeanB试图获取BeanA时在beforeSingletonCreation方法抛出异常。
-	 * 	 * <p>
-	 * 	 * 如果BeanA非构造器依赖BeanB，并且BeanA先创建，BeanB即使构造器依赖BeanA，也可以进行解决循环依赖。
-	 * 	 * 因为这种情况BeanB可以拿到BeanA提前暴露的引用。
+	 * <p>
+	 * * 不是所有的循环依赖Spring都能够解决的。
+	 * * <p>
+	 * * 对于最简单的情况，bean为单例,且使用Autowired或者setter注入，Spring是可以解决这样的循环依赖的。
+	 * * 通过上面的代码中我们可以看出，在一个Bean实例化后,会调用addSingletonFactory方法，
+	 * * 在IOC容器中通过一个ObjectFactory暴露出可以获取还未完全初始化完毕的bean引用。
+	 * * 若存在循环依赖，则依赖的bean可以在调用getBean时通过getSingleton方法获取到循环依赖的bean。
+	 * * <p>
+	 * * 但是Spring是不允许出现原型环的，举例来说,BeanA和BeanB循环依赖且scope都为prototype。
+	 * * 因为prototype的bean，不会触发addSingletonFactory，即每次get这样的bean都会新创建一个。
+	 * * 所以创建BeanA需要注入一个BeanB，而这个BeanB又需要注入一个新的BeanA，这样的循环依赖是没办法解决的。
+	 * * Spring会判断当前bean是否是prototype并且已经在创建中，然后抛出异常。
+	 * * <p>
+	 * * 对于构造器依赖，可以作一下讨论，下面讨论的bean的scope都为单例
+	 * * 如果BeanA构造器中依赖BeanB，并且BeanA先创建，则无论BeanB以哪种形式依赖BeanA，都没办法解决这样的循环依赖。
+	 * * 因为实例化BeanA需要先得到BeanB（此时还未提前暴露引用），
+	 * * BeanB依赖BeanA，但是拿不到BeanA提前暴露的引用，这就形成了无限循环。
+	 * * 这种情况会在BeanB试图获取BeanA时在beforeSingletonCreation方法抛出异常。
+	 * * <p>
+	 * * 如果BeanA非构造器依赖BeanB，并且BeanA先创建，BeanB即使构造器依赖BeanA，也可以进行解决循环依赖。
+	 * * 因为这种情况BeanB可以拿到BeanA提前暴露的引用。
 	 * Return an instance, which may be shared or independent, of the specified bean.
 	 *
 	 * @param name          the name of the bean to retrieve
@@ -321,7 +326,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		/*
 		 * 尝试从缓存中拿取一个bean实例。
-		 * Spring会在Bean还没完全初始化完毕的前，通过一个 ObjectFactory 提前暴露出bean实例，这样为解决循环依赖提供了遍历。
+		 * Spring会在Bean还没完全初始化完毕前，通过一个 ObjectFactory 提前暴露出bean实例，这样为解决循环依赖提供了便利。
 		 */
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);

@@ -93,6 +93,7 @@ import org.springframework.lang.Nullable;
  * <li>DisposableBean's {@code destroy}
  * <li>a custom destroy-method definition
  * </ol>
+ * 顶层接口，spring ioc容器的根接口，子接口有ListableBeanFactory、ConfigurableBeanFactory等
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -131,6 +132,9 @@ public interface BeanFactory {
 	 * returned objects in the case of Singleton beans.
 	 * <p>Translates aliases back to the corresponding canonical bean name.
 	 * Will ask the parent factory if the bean cannot be found in this factory instance.
+	 * <p>
+	 * 根据名称返回一个单例或者原型的对象，该方法使用BeanFactory代替单例、原型设计模式，
+	 * 如果在当前factory实例中找不到bean，将去父factory查找实例。
 	 *
 	 * @param name the name of the bean to retrieve
 	 * @return an instance of the bean
@@ -147,6 +151,10 @@ public interface BeanFactory {
 	 * the result correctly, as can happen with {@link #getBean(String)}.
 	 * <p>Translates aliases back to the corresponding canonical bean name.
 	 * Will ask the parent factory if the bean cannot be found in this factory instance.
+	 * <p>
+	 * 根据名称和类型返回一个单例或者原型的对象，该方法使用BeanFactory代替单例、原型设计模式，
+	 * 如果在当前factory实例中找不到bean，将去父factory查找实例，
+	 * 如果类型不匹配将抛出BeanNotOfRequiredTypeException。
 	 *
 	 * @param name         the name of the bean to retrieve
 	 * @param requiredType type the bean must match; can be an interface or superclass
@@ -161,6 +169,13 @@ public interface BeanFactory {
 	 * Return an instance, which may be shared or independent, of the specified bean.
 	 * <p>Allows for specifying explicit constructor arguments / factory method arguments,
 	 * overriding the specified default arguments (if any) in the bean definition.
+	 * <p>
+	 * 根据名称和构造参数、工厂方法参数返回一个单例或原型的bean，
+	 * 如果在当前factory实例中找不到bean，将去父factory查找实例。
+	 * <p>
+	 * 这里总结下依赖注入常用的几种方式，除了setter、构造参数注入，还有工厂方法注入，
+	 * 面试的时候问很少有人能回答出来第三种，spring还声明了其他的方式也是根据这三种方式延伸而来，
+	 * 开发中最长用的还是这三种，spring建议使用的是构造参数注入，但是构造参数不能太多，要不使得代码比较臃肿。
 	 *
 	 * @param name the name of the bean to retrieve
 	 * @param args arguments to use when creating a bean instance using explicit arguments
@@ -180,6 +195,8 @@ public interface BeanFactory {
 	 * but may also be translated into a conventional by-name lookup based on the name
 	 * of the given type. For more extensive retrieval operations across sets of beans,
 	 * use {@link ListableBeanFactory} and/or {@link BeanFactoryUtils}.
+	 * <p>
+	 * 根据类型返回单例或者原型的bean，在ListableBeanFactory中查找，也可以转换成按名称进行查找。
 	 *
 	 * @param requiredType type the bean must match; can be an interface or superclass
 	 * @return an instance of the single bean matching the required type
@@ -199,6 +216,9 @@ public interface BeanFactory {
 	 * but may also be translated into a conventional by-name lookup based on the name
 	 * of the given type. For more extensive retrieval operations across sets of beans,
 	 * use {@link ListableBeanFactory} and/or {@link BeanFactoryUtils}.
+	 * <p>
+	 * 根据类型和构造方法参数、工厂方法参数返回一个单例或原型的bean，
+	 * 改方法在ListableBeanFactory中查找，也可以转换成按名称查找
 	 *
 	 * @param requiredType type the bean must match; can be an interface or superclass
 	 * @param args         arguments to use when creating a bean instance using explicit arguments
@@ -252,6 +272,9 @@ public interface BeanFactory {
 	 * or abstract, lazy or eager, in scope or not. Therefore, note that a {@code true}
 	 * return value from this method does not necessarily indicate that {@link #getBean}
 	 * will be able to obtain an instance for the same name.
+	 * <p>
+	 * 判断BeanFactory中是否包单例或原型的bean，当前beanFactory中查找不到会到上一级beanFactory中查找，
+	 * 匹配的bean和getBean返回的bean实例不一定是一致的。
 	 *
 	 * @param name the name of the bean to query
 	 * @return whether a bean with the given name is present
@@ -267,6 +290,8 @@ public interface BeanFactory {
 	 * check for independent instances.
 	 * <p>Translates aliases back to the corresponding canonical bean name.
 	 * Will ask the parent factory if the bean cannot be found in this factory instance.
+	 * <p>
+	 * 根据名称判断是不是单例的bean，当前factory中查找不到会进入上一级factory中查找。
 	 *
 	 * @param name the name of the bean to query
 	 * @return whether this bean corresponds to a singleton instance
@@ -285,6 +310,8 @@ public interface BeanFactory {
 	 * check for a shared singleton instance.
 	 * <p>Translates aliases back to the corresponding canonical bean name.
 	 * Will ask the parent factory if the bean cannot be found in this factory instance.
+	 * <p>
+	 * isPrototype(String name)，根据名称判断是不是原型的bean，当前factory中查找不到会进入上一级factory中查找。
 	 *
 	 * @param name the name of the bean to query
 	 * @return whether this bean will always deliver independent instances
@@ -356,6 +383,8 @@ public interface BeanFactory {
 	 * and other aliases (if any) will be returned, with the original bean name
 	 * being the first element in the array.
 	 * <p>Will ask the parent factory if the bean cannot be found in this factory instance.
+	 * <p>
+	 * getAliases(String name)，根据名称查找bean的别名集合。
 	 *
 	 * @param name the bean name to check for aliases
 	 * @return the aliases, or an empty array if none
