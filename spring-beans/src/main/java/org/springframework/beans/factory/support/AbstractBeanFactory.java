@@ -283,6 +283,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * 而AbstractBeanFactory中传递给getSingleton方法的ObjectFactory#getObject的具体实现是调用createBean，
 	 * 这个方法是真正创建并初始化bean的方法，由子类AbstractAutowireCapableBeanFactory完成。
 	 * 对于获取原型bean则简单多了，不用关心放到桶里缓存的事情，直接调用createBean创建就是了。
+	 *
+	 * 如果从当前factoryBean中获取不到就从上级factory中获取，创建完毕标识bean已创建，
+	 * 从BeanDefinition中获取依赖的beanName，注册依赖的bean并获取依赖的bean。
+	 * 如果BeanDefinition是单例的就获取单例的bean，如果获取到的bean从BeanFactory对象注册表中获取bean对象，
+	 * 如果注册表中获取不到就从factoryBean中创建bean。
+	 * 如果BeanDefinition是原型的就获取原型的bean，
+	 * 如果获取到的bean从BeanFactory对象注册表中获取bean对象，
+	 * 如果注册表中获取不到就从factoryBean中创建bean。
+	 * 如果BeanDefinition是scope的就获取scope的bean，
+	 * 如果获取到的bean从BeanFactory对象注册表中获取bean对象，
+	 * 如果注册表中获取不到就从factoryBean中创建bean。
 	 * <p>
 	 * * 不是所有的循环依赖Spring都能够解决的。
 	 * * <p>
@@ -370,12 +381,15 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				}
 			}
 
+			// 标识bean已创建
 			if (!typeCheckOnly) {
 				markBeanAsCreated(beanName);
 			}
 
 			try {
 				final RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
+
+				// 检查bean定义如果是abstract不让创建
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// 有些bean是有depends-on/@DependsOn的，需要先初始化这些依赖。
@@ -383,11 +397,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
+						//  确定依赖的bean是否已经初始化
 						if (isDependent(beanName, dep)) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName, "Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
+
+						// 注册依赖的bean
 						registerDependentBean(dep, beanName);
 						try {
+
+							// 创建当前bean依赖的bean
 							getBean(dep);
 						} catch (NoSuchBeanDefinitionException ex) {
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName, "'" + beanName + "' depends on missing bean '" + dep + "'", ex);
@@ -401,7 +420,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 					/*
 					 * 调用父类 DefaultSingletonBeanRegistry 的 getSingleton，具体创建bean的工作实际上仍然是
-					 * 回调参数中传递的 ObjectFactory#getObject 方法，而 createBean 实际上是子类 AbstractAutowireCapableBeanFactory 实现的。
+					 * 回调参数中传递的 ObjectFactory#getObject 方法，
+					 * 而 createBean 实际上是子类 AbstractAutowireCapableBeanFactory 实现的。
 					 */
 					sharedInstance = getSingleton(beanName, () -> {
 						try {
@@ -410,12 +430,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							// Explicitly remove instance from singleton cache: It might have been put there
 							// eagerly by the creation process, to allow for circular reference resolution.
 							// Also remove any beans that received a temporary reference to the bean.
+
+							// 还要删除接收到该bean的临时引用的所有bean。
 							destroySingleton(beanName);
 							throw ex;
 						}
 					});
 
-					// 对FactoryBean的情况进行特殊处理。
+					// 对FactoryBean的情况进行特殊处理。 从factoryBean中创建的bean对象
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 
 					// 创建原型bean。
@@ -425,6 +447,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					try {
 
 						// 前置处理，维护prototypesCurrentlyInCreation，加入当前bean记录。
+						// 原型的bean创建之前维护内存中的缓存map映射信息
 						beforePrototypeCreation(beanName);
 
 						// 委托给子类 AbstractAutowireCapableBeanFactory 来完成具体的创建bean工作。

@@ -109,6 +109,13 @@ class ConstructorResolver {
 	 * <p>This corresponds to constructor injection: In this mode, a Spring
 	 * bean factory is able to host components that expect constructor-based
 	 * dependency resolution.
+	 * 构造参数自动注入
+	 * <p>
+	 * 解析构造方法，如果允许获取非public的构造方法就获取构造方法，
+	 * 如果不允许获取非public的方法就获取public的方法，对获取的构造方法进行排序，
+	 * public的参数多的排在前面，非public的参数少的排在后面，
+	 * 解析@ConstructorProperties直接，创建参数数组引用了工厂方法或构造方法，
+	 * 查询到默认的bean初始化策略进行初始化，默认是cglib的初始化策略，初始化就是调用public的构造方法进行初始化
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the merged bean definition for the bean
@@ -359,6 +366,15 @@ class ConstructorResolver {
 	 * to match with the parameters. We don't have the types attached to constructor args,
 	 * so trial and error is the only way to go here. The explicitArgs array may contain
 	 * argument values passed in programmatically via the corresponding getBean method.
+	 * <p>
+	 * 遍历执行工厂对象的静态实例方法进行匹配，并且参数一致，
+	 * 如果匹配到就是用工厂方法返回bean对象，否则就报错。
+	 * <p>
+	 * 查询BeanDefinition中的factoryBean名称并从BeanFactory中查询factoryBean对象，
+	 * 如果不是factoryBean也没找到工厂方法和可用的参数，找到工厂类的所有候选方法，
+	 * 如果是静态的并且是工厂方法添加到集合中，然后对候选方法进行排序，顺序是按方法修饰符public参数比较多排在前面，
+	 * 非public参数比较少的排在后面，如果有参数就解析参数的值，相同类型的参数就按权重查找，
+	 * 最后按BeanFactory的初始化策略初始化bean，这里的默认初始化策略是cglib，
 	 *
 	 * @param beanName     the name of the bean
 	 * @param mbd          the merged bean definition for the bean
@@ -366,8 +382,7 @@ class ConstructorResolver {
 	 *                     method, or {@code null} if none (-> use constructor argument values from bean definition)
 	 * @return a BeanWrapper for the new instance
 	 */
-	public BeanWrapper instantiateUsingFactoryMethod(
-			String beanName, RootBeanDefinition mbd, @Nullable Object[] explicitArgs) {
+	public BeanWrapper instantiateUsingFactoryMethod(String beanName, RootBeanDefinition mbd, @Nullable Object[] explicitArgs) {
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
@@ -378,9 +393,10 @@ class ConstructorResolver {
 
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+
+			//   工厂类名不能和beanName相同
 			if (factoryBeanName.equals(beanName)) {
-				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
-						"factory-bean reference points back to the same bean definition");
+				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName, "factory-bean reference points back to the same bean definition");
 			}
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {

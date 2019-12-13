@@ -426,6 +426,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	public void setContextInitializers(@Nullable ApplicationContextInitializer<?>... initializers) {
 		if (initializers != null) {
 			for (ApplicationContextInitializer<?> initializer : initializers) {
+
+				// 为啥不用addAll？  因为此处泛型需要强转~
 				this.contextInitializers.add((ApplicationContextInitializer<ConfigurableApplicationContext>) initializer);
 			}
 		}
@@ -578,11 +580,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 
 		if (logger.isDebugEnabled()) {
-			String value = this.enableLoggingRequestDetails ?
-					"shown which may lead to unsafe logging of potentially sensitive data" :
-					"masked to prevent unsafe logging of potentially sensitive data";
-			logger.debug("enableLoggingRequestDetails='" + this.enableLoggingRequestDetails +
-					"': request parameters and headers will be " + value);
+			String value = this.enableLoggingRequestDetails ? "shown which may lead to unsafe logging of potentially sensitive data" : "masked to prevent unsafe logging of potentially sensitive data";
+			logger.debug("enableLoggingRequestDetails='" + this.enableLoggingRequestDetails + "': request parameters and headers will be " + value);
 		}
 
 		if (logger.isInfoEnabled()) {
@@ -601,8 +600,7 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see #setContextConfigLocation
 	 */
 	protected WebApplicationContext initWebApplicationContext() {
-		WebApplicationContext rootContext =
-				WebApplicationContextUtils.getWebApplicationContext(getServletContext());
+		WebApplicationContext rootContext = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
 		WebApplicationContext wac = null;
 
 		if (this.webApplicationContext != null) {
@@ -744,6 +742,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 		}
 
 		postProcessWebApplicationContext(wac);
+
+		// 执行时机 ApplicationContextInitializer refresh 之前
 		applyInitializers(wac);
 		wac.refresh();
 	}
@@ -795,6 +795,8 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	 * @see ConfigurableApplicationContext#refresh()
 	 */
 	protected void applyInitializers(ConfigurableApplicationContext wac) {
+
+		// 此处可以看到，只会拿 globalInitializerClasses 这个 key 配置的了~~~~ 只有全局的此处才会继续有用
 		String globalClassNames = getServletContext().getInitParameter(ContextLoader.GLOBAL_INITIALIZER_CLASSES_PARAM);
 		if (globalClassNames != null) {
 			for (String className : StringUtils.tokenizeToStringArray(globalClassNames, INIT_PARAM_DELIMITERS)) {
@@ -802,12 +804,14 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 			}
 		}
 
+		// 本 Servlet 里不仅仅可以直接 set 进来，也可以 contextInitializerClasses 直接配置全类名
 		if (this.contextInitializerClasses != null) {
 			for (String className : StringUtils.tokenizeToStringArray(this.contextInitializerClasses, INIT_PARAM_DELIMITERS)) {
 				this.contextInitializers.add(loadInitializer(className, wac));
 			}
 		}
 
+		// 最终排序、执行~~~
 		AnnotationAwareOrderComparator.sort(this.contextInitializers);
 		for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.contextInitializers) {
 			initializer.initialize(wac);
@@ -815,23 +819,16 @@ public abstract class FrameworkServlet extends HttpServletBean implements Applic
 	}
 
 	@SuppressWarnings("unchecked")
-	private ApplicationContextInitializer<ConfigurableApplicationContext> loadInitializer(
-			String className, ConfigurableApplicationContext wac) {
+	private ApplicationContextInitializer<ConfigurableApplicationContext> loadInitializer(String className, ConfigurableApplicationContext wac) {
 		try {
 			Class<?> initializerClass = ClassUtils.forName(className, wac.getClassLoader());
-			Class<?> initializerContextClass =
-					GenericTypeResolver.resolveTypeArgument(initializerClass, ApplicationContextInitializer.class);
+			Class<?> initializerContextClass = GenericTypeResolver.resolveTypeArgument(initializerClass, ApplicationContextInitializer.class);
 			if (initializerContextClass != null && !initializerContextClass.isInstance(wac)) {
-				throw new ApplicationContextException(String.format(
-						"Could not apply context initializer [%s] since its generic parameter [%s] " +
-								"is not assignable from the type of application context used by this " +
-								"framework servlet: [%s]", initializerClass.getName(), initializerContextClass.getName(),
-						wac.getClass().getName()));
+				throw new ApplicationContextException(String.format("Could not apply context initializer [%s] since its generic parameter [%s] " + "is not assignable from the type of application context used by this " + "framework servlet: [%s]", initializerClass.getName(), initializerContextClass.getName(), wac.getClass().getName()));
 			}
 			return BeanUtils.instantiateClass(initializerClass, ApplicationContextInitializer.class);
 		} catch (ClassNotFoundException ex) {
-			throw new ApplicationContextException(String.format("Could not load class [%s] specified " +
-					"via 'contextInitializerClasses' init-param", className), ex);
+			throw new ApplicationContextException(String.format("Could not load class [%s] specified " + "via 'contextInitializerClasses' init-param", className), ex);
 		}
 	}
 

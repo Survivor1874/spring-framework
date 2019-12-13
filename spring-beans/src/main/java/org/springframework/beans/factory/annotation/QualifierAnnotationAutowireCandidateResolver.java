@@ -48,17 +48,27 @@ import org.springframework.util.StringUtils;
  * Also supports suggested expression values through a {@link Value value} annotation.
  *
  * <p>Also supports JSR-330's {@link javax.inject.Qualifier} annotation, if available.
+ * 它继承自GenericTypeAwareAutowireCandidateResolver，
+ * 所以它不仅仅能处理org.springframework.beans.factory.annotation.Qualifier、@Value，
+ * 还能够处理泛型依赖注入，因此功能已经很完善了~~~ 在Spring2.5之后都使用它来处理依赖关系~
+ * <p>
+ * 它不仅仅能够处理@Qualifier注解，
+ * 也能够处理通过@Value注解解析表达式得到的suggested value，
+ * 也就是说它还实现了接口方法getSuggestedValue()；
  *
  * @author Mark Fisher
  * @author Juergen Hoeller
  * @author Stephane Nicoll
- * @since 2.5
  * @see AutowireCandidateQualifier
  * @see Qualifier
  * @see Value
+ * @since 2.5
  */
 public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwareAutowireCandidateResolver {
 
+	/**
+	 * 支持的注解类型，默认支持@Qualifier和JSR-330的javax.inject.Qualifier注解
+	 */
 	private final Set<Class<? extends Annotation>> qualifierTypes = new LinkedHashSet<>(2);
 
 	private Class<? extends Annotation> valueAnnotationType = Value.class;
@@ -74,9 +84,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 		this.qualifierTypes.add(Qualifier.class);
 		try {
 			this.qualifierTypes.add((Class<? extends Annotation>) ClassUtils.forName("javax.inject.Qualifier",
-							QualifierAnnotationAutowireCandidateResolver.class.getClassLoader()));
-		}
-		catch (ClassNotFoundException ex) {
+					QualifierAnnotationAutowireCandidateResolver.class.getClassLoader()));
+		} catch (ClassNotFoundException ex) {
 			// JSR-330 API not available - simply skip.
 		}
 	}
@@ -84,6 +93,9 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	/**
 	 * Create a new QualifierAnnotationAutowireCandidateResolver
 	 * for the given qualifier annotation type.
+	 * // 你可可以通过构造函数，增加你自定义的注解的支持~~~
+	 * // 注意都是add  不是set
+	 *
 	 * @param qualifierType the qualifier annotation to look for
 	 */
 	public QualifierAnnotationAutowireCandidateResolver(Class<? extends Annotation> qualifierType) {
@@ -94,6 +106,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	/**
 	 * Create a new QualifierAnnotationAutowireCandidateResolver
 	 * for the given qualifier annotation types.
+	 *
 	 * @param qualifierTypes the qualifier annotations to look for
 	 */
 	public QualifierAnnotationAutowireCandidateResolver(Set<Class<? extends Annotation>> qualifierTypes) {
@@ -110,6 +123,9 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * <p>This implementation only supports annotations as qualifier types.
 	 * The default is Spring's {@link Qualifier} annotation which serves
 	 * as a qualifier for direct use and also as a meta annotation.
+	 * <p>
+	 * // CustomAutowireConfigurer 它会调用这个方法来自定义注解
+	 *
 	 * @param qualifierType the annotation type to register
 	 */
 	public void addQualifierType(Class<? extends Annotation> qualifierType) {
@@ -124,6 +140,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * <p>This setter property exists so that developers can provide their own
 	 * (non-Spring-specific) annotation type to indicate a default value
 	 * expression for a specific argument.
+	 *
+	 * @Value 注解类型Spring也是允许我们改成自己的类型的
 	 */
 	public void setValueAnnotationType(Class<? extends Annotation> valueAnnotationType) {
 		this.valueAnnotationType = valueAnnotationType;
@@ -140,17 +158,34 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	 * the same qualifier or match by meta attributes. A "value" attribute will
 	 * fallback to match against the bean name or an alias if a qualifier or
 	 * attribute does not match.
+	 * <p>
+	 * // 这个实现，比父类的实现就更加的严格了，区分度也就越高了~~~
+	 * // checkQualifiers 方法是本类的核心，灵魂
+	 * // 它有两个方法 getQualifiedElementAnnotation 和 getFactoryMethodAnnotation 表名了它支持filed和方法
+	 *
 	 * @see Qualifier
 	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		boolean match = super.isAutowireCandidate(bdHolder, descriptor);
+
+		// 这里发现，即使父类都匹配上了，我本来还得再次校验一把~~~
 		if (match) {
+
+			// @Qualifier 注解在此处生效  最终可能匹配出一个或者0个出来
 			match = checkQualifiers(bdHolder, descriptor.getAnnotations());
+
+			// 若字段上匹配上了还不行，还得看方法上的这个注解
 			if (match) {
+
+				// 这里处理的是方法入参们~~~~  只有方法有入参才需要继续解析
 				MethodParameter methodParam = descriptor.getMethodParameter();
 				if (methodParam != null) {
+
+					// 这个处理非常有意思：methodParam.getMethod() 表示这个入参它所属于的方法
 					Method method = methodParam.getMethod();
+
+					// 如果它不属于任何方法或者属于方法的返回值是 void  才去看它头上标注的 @Qualifier 注解
 					if (method == null || void.class == method.getReturnType()) {
 						match = checkQualifiers(bdHolder, methodParam.getMethodAnnotations());
 					}
@@ -175,8 +210,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 			if (isQualifier(type)) {
 				if (!checkQualifier(bdHolder, annotation, typeConverter)) {
 					fallbackToMeta = true;
-				}
-				else {
+				} else {
 					checkMeta = false;
 				}
 			}
@@ -248,8 +282,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 						if (beanType != null) {
 							targetAnnotation = AnnotationUtils.getAnnotation(ClassUtils.getUserClass(beanType), type);
 						}
-					}
-					catch (NoSuchBeanDefinitionException ex) {
+					} catch (NoSuchBeanDefinitionException ex) {
 						// Not the usual case - simply forget about the type check...
 					}
 				}
@@ -314,6 +347,10 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 	/**
 	 * Determine whether the given dependency declares an autowired annotation,
 	 * checking its required flag.
+	 * <p>
+	 * // 这里显示的使用了Autowired 注解，我个人感觉这里是不应该的~~~~ 毕竟已经到这一步了  应该脱离@Autowired注解本身
+	 * // 当然，这里相当于是做了个fallback~~~还算可以接受吧
+	 *
 	 * @see Autowired#required()
 	 */
 	@Override
@@ -327,6 +364,8 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Determine whether the given dependency declares a qualifier annotation.
+	 * // 标注的所有注解里  是否有@Qualifier这个注解~
+	 *
 	 * @see #isQualifier(Class)
 	 * @see Qualifier
 	 */
@@ -342,13 +381,21 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Determine whether the given dependency declares a value annotation.
+	 * // @since 3.0   这是本类的另外一个核心 解析 @Value 注解
+	 * // 需要注意的是此类它不负责解析占位符啥的  只复杂把字符串返回
+	 * // 最终是交给 value = evaluateBeanDefinitionString(strVal, bd);它处理~~~
+	 *
 	 * @see Value
 	 */
 	@Override
 	@Nullable
 	public Object getSuggestedValue(DependencyDescriptor descriptor) {
+
+		// 拿到value注解（当然不一定是@Value注解  可以自定义嘛）  并且拿到它的注解属性value值~~~  比如#{person}
 		Object value = findValue(descriptor.getAnnotations());
 		if (value == null) {
+
+			// 相当于@Value注解标注在方法入参上 也是阔仪的~~~~~
 			MethodParameter methodParam = descriptor.getMethodParameter();
 			if (methodParam != null) {
 				value = findValue(methodParam.getMethodAnnotations());
@@ -374,6 +421,7 @@ public class QualifierAnnotationAutowireCandidateResolver extends GenericTypeAwa
 
 	/**
 	 * Extract the value attribute from the given annotation.
+	 *
 	 * @since 4.3
 	 */
 	protected Object extractValue(AnnotationAttributes attr) {

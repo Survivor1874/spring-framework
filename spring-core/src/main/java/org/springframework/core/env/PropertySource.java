@@ -89,6 +89,8 @@ public abstract class PropertySource<T> {
 	 */
 	@SuppressWarnings("unchecked")
 	public PropertySource(String name) {
+
+		// 若没有指定source 默认就是object  而不是null
 		this(name, (T) new Object());
 	}
 
@@ -112,6 +114,8 @@ public abstract class PropertySource<T> {
 	 * <p>This implementation simply checks for a {@code null} return value
 	 * from {@link #getProperty(String)}. Subclasses may wish to implement
 	 * a more efficient algorithm if possible.
+	 * // getProperty是个抽象方法  子类去实现~~~
+	 * // 小细节：若对应的key存在但是值为null，此处也是返回false的  表示不包含~
 	 *
 	 * @param name the property name to find
 	 */
@@ -137,11 +141,11 @@ public abstract class PropertySource<T> {
 	 * <li>the {@code name} properties for both objects are equal
 	 * </ul>
 	 * <p>No properties other than {@code name} are evaluated.
+	 * // 此处特别特别注意重写的这两个方法，我们发现它只和name有关，只要name相等  就代表着是同一个对象~~~~ 这点特别重要~
 	 */
 	@Override
 	public boolean equals(Object other) {
-		return (this == other || (other instanceof PropertySource &&
-				ObjectUtils.nullSafeEquals(this.name, ((PropertySource<?>) other).name)));
+		return (this == other || (other instanceof PropertySource && ObjectUtils.nullSafeEquals(this.name, ((PropertySource<?>) other).name)));
 	}
 
 	/**
@@ -189,6 +193,7 @@ public abstract class PropertySource<T> {
 	 * The returned {@code PropertySource} will throw {@code UnsupportedOperationException}
 	 * if any methods other than {@code equals(Object)}, {@code hashCode()}, and {@code toString()}
 	 * are called.
+	 * // 静态方法：根据name就创建一个属性源~  ComparisonPropertySource是StubPropertySource的子类~
 	 *
 	 * @param name the name of the comparison {@code PropertySource} to be created and returned.
 	 */

@@ -74,6 +74,8 @@ import org.springframework.util.StringUtils;
  * application context via the {@link #ContextLoader(WebApplicationContext)}
  * constructor, allowing for programmatic configuration in Servlet 3.0+ environments.
  * See {@link org.springframework.web.WebApplicationInitializer} for usage examples.
+ * <p>
+ * 初始化Spring的根容器，ContextLoaderListener所有事情都是委派 ContextLoader 来完成的
  *
  * @author Juergen Hoeller
  * @author Colin Sampaleanu
@@ -88,6 +90,7 @@ public class ContextLoader {
 	/**
 	 * Config param for the root WebApplicationContext id,
 	 * to be used as serialization id for the underlying BeanFactory: {@value}.
+	 * init-param定义root根容器id的key
 	 */
 	public static final String CONTEXT_ID_PARAM = "contextId";
 
@@ -95,6 +98,7 @@ public class ContextLoader {
 	 * Name of servlet context parameter (i.e., {@value}) that can specify the
 	 * config location for the root context, falling back to the implementation's
 	 * default otherwise.
+	 * init-param 定义root根容器的配置文件的路径地址的key
 	 *
 	 * @see org.springframework.web.context.support.XmlWebApplicationContext#DEFAULT_CONFIG_LOCATION
 	 */
@@ -102,6 +106,7 @@ public class ContextLoader {
 
 	/**
 	 * Config param for the root WebApplicationContext implementation class to use: {@value}.
+	 * init-param 自己可以指定一个 WebApplicationContext 的实现类（一般都不需要~）
 	 *
 	 * @see #determineContextClass(ServletContext)
 	 */
@@ -110,6 +115,7 @@ public class ContextLoader {
 	/**
 	 * Config param for {@link ApplicationContextInitializer} classes to use
 	 * for initializing the root web application context: {@value}.
+	 * init-param 可以伴随着容器初始化的时候，我们自己做一些工作的类们。注意需要实现对应接口哦~ key
 	 *
 	 * @see #customizeContext(ServletContext, ConfigurableWebApplicationContext)
 	 */
@@ -118,6 +124,8 @@ public class ContextLoader {
 	/**
 	 * Config param for global {@link ApplicationContextInitializer} classes to use
 	 * for initializing all web application contexts in the current application: {@value}.
+	 * <p>
+	 * 基本同上
 	 *
 	 * @see #customizeContext(ServletContext, ConfigurableWebApplicationContext)
 	 */
@@ -126,16 +134,24 @@ public class ContextLoader {
 	/**
 	 * Any number of these characters are considered delimiters between
 	 * multiple values in a single init-param String value.
+	 * 多值分隔符号
 	 */
 	private static final String INIT_PARAM_DELIMITERS = ",; \t\n";
 
 	/**
 	 * Name of the class path resource (relative to the ContextLoader class)
 	 * that defines ContextLoader's default strategy names.
+	 * 默认的配置文件  里面内容只有一句话：
+	 * org.springframework.web.context.WebApplicationContext=org.springframework.web.context.support.XmlWebApplicationContext
+	 * 由此可见，它默认是采用XmlWebApplicationContext来初始化上下文的
 	 */
 	private static final String DEFAULT_STRATEGIES_PATH = "ContextLoader.properties";
 
 
+	/**
+	 * ContextLoader在被实例化的时候，会执行下面的这个静态代码块。
+	 * 做了一件事：把默认的配置文件加载进来而已
+	 */
 	private static final Properties defaultStrategies;
 
 	static {
@@ -153,9 +169,10 @@ public class ContextLoader {
 
 	/**
 	 * Map from (thread context) ClassLoader to corresponding 'current' WebApplicationContext.
+	 * 这两个属性主要拿到当前的容器上下文。
+	 * 其中static的工具方法ContextLoader.getCurrentWebApplicationContext是基于此的
 	 */
-	private static final Map<ClassLoader, WebApplicationContext> currentContextPerThread =
-			new ConcurrentHashMap<>(1);
+	private static final Map<ClassLoader, WebApplicationContext> currentContextPerThread = new ConcurrentHashMap<>(1);
 
 	/**
 	 * The 'current' WebApplicationContext, if the ContextLoader class is
@@ -174,8 +191,7 @@ public class ContextLoader {
 	/**
 	 * Actual ApplicationContextInitializer instances to apply to the context.
 	 */
-	private final List<ApplicationContextInitializer<ConfigurableApplicationContext>> contextInitializers =
-			new ArrayList<>();
+	private final List<ApplicationContextInitializer<ConfigurableApplicationContext>> contextInitializers = new ArrayList<>();
 
 
 	/**
@@ -541,6 +557,9 @@ public class ContextLoader {
 	 * Obtain the Spring root web application context for the current thread
 	 * (i.e. for the current thread's context ClassLoader, which needs to be
 	 * the web application's ClassLoader).
+	 * 可以在任何地方都获取到Spring容器（根容器），非常好用
+	 * 有一种方法如下
+	 * ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(request.getSession().getServletContext());
 	 *
 	 * @return the current root web application context, or {@code null}
 	 * if none found

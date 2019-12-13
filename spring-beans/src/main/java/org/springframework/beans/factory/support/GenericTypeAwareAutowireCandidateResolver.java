@@ -38,6 +38,8 @@ import org.springframework.util.ClassUtils;
  * <p>This is the base class for
  * {@link org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver},
  * providing an implementation all non-annotation-based resolution steps at this level.
+ * <p>
+ * 从名字可以看出和泛型有关。Spring4.0后的泛型依赖注入主要是它来实现的，所以这个类也是Spring4.0后出现的
  *
  * @author Juergen Hoeller
  * @since 4.0
@@ -60,12 +62,26 @@ public class GenericTypeAwareAutowireCandidateResolver extends SimpleAutowireCan
 	}
 
 
+	/**
+	 * // 是否允许被依赖~~~
+	 * // 因为bean定义里默认是true，绝大多数情况下我们不会修改它~~~
+	 * // 所以继续执行：checkGenericTypeMatch 看看泛型类型是否能够匹配上
+	 * // 若能够匹配上   这个就会被当作候选的Bean了~~~
+	 *
+	 * @param bdHolder
+	 * @param descriptor
+	 * @return
+	 */
 	@Override
 	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder, DependencyDescriptor descriptor) {
 		if (!super.isAutowireCandidate(bdHolder, descriptor)) {
 			// If explicitly false, do not proceed with any other checks...
 			return false;
 		}
+
+		// 处理泛型依赖的核心方法~~~  也是本实现类的灵魂
+		// 注意：这里还兼容到了工厂方法模式FactoryMethod
+		// 所以即使你返回BaseDao<T>它是能够很好的处理好类型的~~~
 		return checkGenericTypeMatch(bdHolder, descriptor);
 	}
 
